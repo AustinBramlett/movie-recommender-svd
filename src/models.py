@@ -2,20 +2,17 @@
 import numpy as np
 
 
-def rmse(actual, predicted):
-    return np.sqrt(np.mean((actual - predicted) ** 2))
+def bias_baseline(R):
+    mu = np.nanmean(R)
 
+    b_user = np.nanmean(R - mu, axis=1)
+    residual = R - mu - b_user[:, None]
 
-def global_mean_model(train, test):
-    mean = train["rating"].mean()
-    return np.full(len(test), mean)
+    b_item = np.zeros(R.shape[1])
 
+    for i in range(R.shape[1]):
+        b_item[i] = np.nanmean(residual[:, i])
 
-def user_mean_model(train, test):
-    means = train.groupby("user")["rating"].mean()
-    return test["user"].map(means).fillna(train["rating"].mean()).to_numpy()
+    b_user = np.nan_to_num(b_user)
 
-
-def item_mean_model(train, test):
-    means = train.groupby("item")["rating"].mean()
-    return test["item"].map(means).fillna(train["rating"].mean()).to_numpy()
+    return mu, b_user, b_item
